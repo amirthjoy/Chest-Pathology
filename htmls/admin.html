@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Admin Doctor Management Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#007c8a",
+                        "background-light": "#f9fafa",
+                        "background-dark": "#22262a",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Manrope', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .active-nav {
+            background-color: #007c8a20;
+            color: #007c8a;
+            border-right: 3px solid #007c8a;
+            border-radius: 0;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-800 dark:text-slate-200 transition-colors duration-200">
+<div class="flex h-screen overflow-hidden">
+<!-- Sidebar Navigation -->
+<aside class="w-64 flex flex-col bg-white dark:bg-[#1a1d21] border-r border-slate-200 dark:border-slate-800 z-50">
+<div class="p-6">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-xl bg-primary flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-2xl">clinical_notes</span>
+</div>
+<div class="flex flex-col">
+<h1 class="text-[#0c1b1d] dark:text-white text-lg font-bold leading-tight">MediAI Admin</h1>
+<p class="text-primary text-xs font-semibold uppercase tracking-wider">Health Core</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 flex flex-col gap-1 px-3 mt-4">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg active-nav" href="#">
+<span class="material-symbols-outlined">stethoscope</span>
+<span class="text-sm font-semibold">Doctors</span>
+
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all" href="#">
+<span class="material-symbols-outlined text-slate-500">history_edu</span>
+<span class="text-sm font-medium text-slate-600 dark:text-slate-400">Logs</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all" href="#">
+<span class="material-symbols-outlined text-slate-500">verified_user</span>
+<span class="text-sm font-medium text-slate-600 dark:text-slate-400">Security</span>
+</a>
+</nav>
+<div class="p-4 border-t border-slate-100 dark:border-slate-800">
+<!-- <a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all" href="#">
+<span class="material-symbols-outlined text-slate-500">settings</span>
+<span class="text-sm font-medium text-slate-600 dark:text-slate-400">Settings</span>
+</a> -->
+<a class="flex items-center gap-3 mt-2 px-4 py-3 rounded-lg hover:bg-red-50 dark:hover:bg-red-800 transition-all text-red-600 dark:text-red-400 font-semibold" href="{{ url_for('logout') }}">
+<span class="material-symbols-outlined text-slate-500">logout</span>
+<span class="text-sm">Log Out</span>
+</a>
+<div class="mt-4 flex items-center gap-3 px-4 py-3">
+<div class="size-8 rounded-full bg-slate-200 dark:bg-slate-700 bg-cover bg-center" data-alt="Admin user profile picture" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAmdmOr0Ix293eztp1BLGcBlWJZTwTz106rXk4qijsiqw_ApKWQY8q1lANQzxkeVDotXpDEisuOwP2vPeb2oeuZIW1JjMXZUG8J1KPEIm88g01Pd-wtkFLkYPWamgxSs9rPT87naerpp8nm2WNpkiVlbf1YURikOPA8iZclbmNaljQJrjNGRcHBhkDAoByWXKGt4GxRYAx9GjrsWpZ3IZcTPK8OMnPGfg3YBlVmJ_pftFAki154EvFe2OYlTDzVl2kXpibcZNT3KCI");'></div>
+<div class="flex-1 overflow-hidden">
+<p class="text-xs font-bold truncate">{{ admin_username or 'Admin' }}</p>
+<p class="text-[10px] text-slate-400 uppercase font-bold tracking-tighter">System Admin</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 overflow-y-auto bg-background-light dark:bg-background-dark scroll-smooth">
+<div class="max-w-7xl mx-auto px-8 py-8">
+<!-- Breadcrumbs & Header -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+<div class="space-y-1">
+<nav class="flex items-center gap-2 mb-2">
+<a class="text-xs font-semibold text-primary/70 hover:text-primary uppercase tracking-widest" href="#">Dashboard</a>
+<span class="material-symbols-outlined text-xs text-slate-300">chevron_right</span>
+<span class="text-xs font-semibold text-slate-400 uppercase tracking-widest">Admin</span>
+</nav>
+<h2 class="text-4xl font-extrabold text-[#0c1b1d] dark:text-white tracking-tight">Doctor Management</h2>
+</div>
+<button onclick="toggleModal('add-doctor-modal')" class="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-primary/20 active:scale-95">
+<span class="material-symbols-outlined">person_add</span>
+<span>Add New Doctor</span>
+</button>
+</div>
+<!-- Table Controls -->
+<div class="bg-white dark:bg-[#1a1d21] rounded-t-2xl border border-slate-200 dark:border-slate-800 p-4 border-b-0 flex flex-col md:flex-row gap-4 items-center justify-between">
+<div class="relative w-full md:w-96">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+<input class="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-primary/40 text-sm transition-all placeholder:text-slate-400" placeholder="Search by name, specialization, or ID..." type="text"/>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-2 px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+<span class="material-symbols-outlined text-lg">filter_list</span>
+                            Filter
+                        </button>
+<button class="flex items-center gap-2 px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+<span class="material-symbols-outlined text-lg">download</span>
+                            Export
+                        </button>
+</div>
+</div>
+<!-- Doctor Table -->
+<div class="bg-white dark:bg-[#1a1d21] rounded-b-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+    <table class="w-full text-left border-collapse">
+        <thead>
+            <tr class="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
+                <th class="px-6 py-4 text-xs font-black uppercase tracking-widest text-slate-400">Doctor Profile</th>
+                <th class="px-6 py-4 text-xs font-black uppercase tracking-widest text-slate-400">Specialization</th>
+                <th class="px-6 py-4 text-xs font-black uppercase tracking-widest text-slate-400">Status</th>
+                <th class="px-6 py-4 text-xs font-black uppercase tracking-widest text-slate-400">Availability</th>
+                <th class="px-6 py-4 text-xs font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+            {% if doctors %}
+                {% for doctor in doctors %}
+                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
+                    <td class="px-6 py-5">
+                        <div class="flex items-center gap-4">
+                            <div class="size-10 rounded-full bg-cover bg-center border-2 border-primary/20" style="background-image: url('/public/dp/{{ doctor.doctor_id }}.jpg');"></div>
+                            <div>
+                                <p class="font-bold text-slate-900 dark:text-white">{{ doctor.full_name }}</p>
+                                <p class="text-xs text-slate-500 font-medium tracking-tight">{{ doctor.email }}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-5">
+                        <span class="px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-black uppercase tracking-wider">{{ doctor.department }}</span>
+                    </td>
+                    <td class="px-6 py-5">
+                        <div class="flex items-center gap-1.5">
+                            {% if doctor.status == 'active' %}
+                                <span class="size-2 rounded-full bg-green-500"></span>
+                                <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Active</span>
+                            {% else %}
+                                <span class="size-2 rounded-full bg-red-500"></span>
+                                <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Inactive</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td class="px-6 py-5 text-xs font-medium text-slate-500">—</td>
+                    <td class="px-6 py-5 text-right">
+                        <div class="flex justify-end gap-2">
+                            <button 
+    class="p-2 hover:bg-primary/10 text-slate-400 hover:text-primary rounded-lg transition-colors edit-btn"
+    data-doctor-id="{{ doctor.doctor_id }}"
+    data-full-name="{{ doctor.full_name }}"
+    data-email="{{ doctor.email }}"
+    data-department="{{ doctor.department }}"
+    data-status="{{ doctor.status }}"
+>
+    <span class="material-symbols-outlined text-lg">edit</span>
+</button>
+                            <form action="/admin/doctors/delete/{{ doctor.doctor_id }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this doctor?');">
+                                <input type="hidden" name="page" value="{{ pagination.page }}" />
+                                <button class="p-2 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-lg transition-colors">
+                                    <span class="material-symbols-outlined text-lg">delete</span>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="5" class="px-6 py-8 text-center text-slate-500">No doctors found.</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+    <!-- Pagination -->
+    <div class="px-6 py-4 bg-slate-50/50 dark:bg-slate-800/50 flex items-center justify-between border-t border-slate-100 dark:border-slate-800">
+        <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">Showing {{ (pagination.page-1)*pagination.per_page + 1 }} to {{ (pagination.page-1)*pagination.per_page + (doctors|length) }} of {{ pagination.total }} results</p>
+        <div class="flex items-center gap-1">
+            {% if pagination.has_prev %}
+                <a href="{{ url_for('manage_doctors', page=pagination.prev_num, per_page=per_page) }}" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 transition-all">
+                    <span class="material-symbols-outlined text-lg">chevron_left</span>
+                </a>
+            {% else %}
+                <span class="p-2 rounded-lg text-slate-300"><span class="material-symbols-outlined text-lg">chevron_left</span></span>
+            {% endif %}
+
+            {% for p in range(1, pagination.pages + 1) %}
+                {% if p == pagination.page %}
+                    <span class="size-8 rounded-lg bg-primary text-white text-xs font-bold">{{ p }}</span>
+                {% elif p <= 3 or p > pagination.pages - 3 or (p >= pagination.page - 1 and p <= pagination.page + 1) %}
+                    <a href="{{ url_for('manage_doctors', page=p, per_page=per_page) }}" class="size-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-xs font-bold transition-all">{{ p }}</a>
+                {% elif p == 4 and pagination.page > 4 %}
+                    <span class="px-1 text-slate-400">...</span>
+                {% elif p == pagination.pages - 3 and pagination.page < pagination.pages - 3 %}
+                    <span class="px-1 text-slate-400">...</span>
+                {% endif %}
+            {% endfor %}
+
+            {% if pagination.has_next %}
+                <a href="{{ url_for('manage_doctors', page=pagination.next_num, per_page=per_page) }}" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 transition-all">
+                    <span class="material-symbols-outlined text-lg">chevron_right</span>
+                </a>
+            {% else %}
+                <span class="p-2 rounded-lg text-slate-300"><span class="material-symbols-outlined text-lg">chevron_right</span></span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+<!-- Footer System Info -->
+<div class="mt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+<p>© 2024 MediAI Health Systems. All Rights Reserved.</p>
+<div class="flex items-center gap-6">
+<a class="hover:text-primary transition-colors" href="#">System Status</a>
+<a class="hover:text-primary transition-colors" href="#">Security Audit</a>
+<div class="flex items-center gap-1.5 text-green-500">
+<span class="size-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                            Live Connection
+                        </div>
+</div>
+</div>
+</div>
+<!-- Add New Doctor Modal -->
+<div id="add-doctor-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div class="bg-white dark:bg-[#1a1d21] p-6 rounded-xl shadow-lg w-full max-w-md">
+        <h3 class="text-lg font-bold mb-4">Add New Doctor</h3>
+        <form action="/admin/doctors" method="POST" enctype="multipart/form-data">
+            <div class="mb-4">
+                <label for="full_name" class="block text-sm font-medium">Full Name</label>
+                <input type="text" id="full_name" name="full_name" class="w-full p-2 border rounded-lg" required>
+            </div>
+            <div class="mb-4">
+                <label for="email" class="block text-sm font-medium">Email</label>
+                <input type="email" id="email" name="email" class="w-full p-2 border rounded-lg" required>
+            </div>
+            <div class="mb-4">
+                <label for="department" class="block text-sm font-medium">Department</label>
+                <input type="text" id="department" name="department" class="w-full p-2 border rounded-lg" required>
+            </div>
+            <div class="mb-4">
+                <label for="password" class="block text-sm font-medium">Password</label>
+                <input type="password" id="password" name="password" class="w-full p-2 border rounded-lg" required>
+            </div>
+            <div class="mb-4">
+                <label for="profile_picture" class="block text-sm font-medium">Profile Picture</label>
+                <input type="file" id="profile_picture" name="profile_picture" class="w-full p-2 border rounded-lg">
+            </div>
+            <div class="flex justify-end gap-2">
+                <button type="button" class="bg-gray-500 text-white px-4 py-2 rounded-lg" onclick="toggleModal('add-doctor-modal')">Cancel</button>
+                <button type="submit" class="bg-primary text-white px-4 py-2 rounded-lg">Add</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Doctor Modal -->
+<div id="edit-doctor-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div class="bg-white dark:bg-[#1a1d21] p-6 rounded-xl shadow-lg w-full max-w-md">
+        <h3 class="text-lg font-bold mb-4">Edit Doctor</h3>
+        <form id="edit-doctor-form" method="POST" enctype="multipart/form-data">
+            <div class="mb-4">
+                <label for="edit_full_name" class="block text-sm font-medium">Full Name</label>
+                <input type="text" id="edit_full_name" name="full_name" class="w-full p-2 border rounded-lg" required>
+            </div>
+            <div class="mb-4">
+                <label for="edit_email" class="block text-sm font-medium">Email</label>
+                <input type="email" id="edit_email" name="email" class="w-full p-2 border rounded-lg" required>
+            </div>
+            <div class="mb-4">
+                <label for="edit_department" class="block text-sm font-medium">Department</label>
+                <input type="text" id="edit_department" name="department" class="w-full p-2 border rounded-lg" required>
+            </div>
+            <div class="mb-4">
+                <label for="edit_password" class="block text-sm font-medium">Password (leave blank to keep current)</label>
+                <input type="password" id="edit_password" name="password" class="w-full p-2 border rounded-lg">
+            </div>
+            <div class="mb-4">
+                <label for="edit_status" class="block text-sm font-medium">Status</label>
+                <select id="edit_status" name="status" class="w-full p-2 border rounded-lg">
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label for="edit_profile_picture" class="block text-sm font-medium">Profile Picture</label>
+                <input type="file" id="edit_profile_picture" name="profile_picture" class="w-full p-2 border rounded-lg">
+            </div>
+            <input type="hidden" name="page" value="{{ pagination.page }}" />
+            <div class="flex justify-end gap-2">
+                <button type="button" class="bg-gray-500 text-white px-4 py-2 rounded-lg" onclick="toggleModal('edit-doctor-modal')">Cancel</button>
+                <button type="submit" class="bg-primary text-white px-4 py-2 rounded-lg">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function toggleModal(modalId) {
+        const modal = document.getElementById(modalId);
+        modal.classList.toggle('hidden');
+    }
+
+    function openEditModal(doctorId, fullName, email, department, status) {
+        document.getElementById('edit_full_name').value = fullName;
+        document.getElementById('edit_email').value = email;
+        document.getElementById('edit_department').value = department;
+        document.getElementById('edit_status').value = status;
+        document.getElementById('edit-doctor-form').action = `/admin/doctors/edit/${doctorId}`;
+        toggleModal('edit-doctor-modal');
+    }
+
+    // Initialize edit button listeners
+    document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            openEditModal(
+                btn.dataset.doctorId,
+                btn.dataset.fullName,
+                btn.dataset.email,
+                btn.dataset.department,
+                btn.dataset.status
+            );
+        });
+    });
+</script>
+</main>
+</div>
+</body></html>

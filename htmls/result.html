@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Diagnosis Results - PathoAI</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#2f8bc1",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#131b1f",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .dropdown-menu {
+            display: none;
+        }
+        .dropdown-menu.active {
+            display: block;
+        }
+        .progress-ring__circle {
+            transition: stroke-dashoffset 0.35s;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+        .glow-primary {
+            box-shadow: 0 0 20px rgba(47, 139, 193, 0.2);
+        }
+        .glow-success {
+            box-shadow: 0 0 25px rgba(16, 185, 129, 0.3);
+        }
+        .glow-warning {
+            box-shadow: 0 0 25px rgba(245, 158, 11, 0.3);
+        }
+        .glow-danger {
+            box-shadow: 0 0 25px rgba(239, 68, 68, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display min-h-screen text-[#101619] dark:text-gray-100 transition-colors duration-200">
+    <!-- Main Layout Container -->
+    <div class="flex flex-col min-h-screen">
+        <!-- TopNavBar -->
+        <header class="w-full bg-white dark:bg-[#1a2429] border-b border-[#e9eef1] dark:border-gray-800 sticky top-0 z-50">
+            <div class="max-w-[1200px] mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
+                <!-- Logo Section -->
+                <div class="flex items-center gap-3">
+                    <div class="size-8 bg-primary rounded-lg flex items-center justify-center text-white">
+                        <span class="material-symbols-outlined !text-[20px]">radiology</span>
+                    </div>
+                    <h2 class="text-[#101619] dark:text-white text-lg md:text-xl font-bold tracking-tight">Chest <span class="text-primary">Pathology</span></h2>
+                </div>
+
+                <!-- Right Actions -->
+                <div class="flex items-center gap-2 md:gap-4">
+                    <!-- Dark Mode Toggle -->
+                    <button id="themeToggle" class="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                        <span class="material-symbols-outlined">light_mode</span>
+                    </button>
+
+                    <!-- Profile Dropdown -->
+                    <div class="relative">
+                        <!-- Profile Button -->
+                        <button id="profileBtn" class="flex items-center gap-2 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                            <div class="h-9 w-9 md:h-10 md:w-10 rounded-full bg-cover bg-center border-2 border-primary/20 flex-shrink-0" id="profileImage" title="Doctor profile">
+                            </div>
+                            <span class="hidden md:inline text-sm font-medium text-[#101619] dark:text-white truncate">{{ username }}</span>
+                        </button>
+
+                        <!-- Dropdown Menu -->
+                        <div id="dropdownMenu" class="dropdown-menu absolute right-0 mt-2 w-48 bg-white dark:bg-[#1a2429] rounded-xl shadow-lg border border-[#e9eef1] dark:border-gray-800 overflow-hidden">
+                            <!-- Profile Section -->
+                            <div class="px-4 py-3 border-b border-[#e9eef1] dark:border-gray-800">
+                                <p class="text-sm font-bold text-[#101619] dark:text-white truncate">{{ username }}</p>
+                                <p class="text-xs text-[#577a8e] dark:text-gray-400 truncate">{{ email }}</p>
+                            </div>
+
+                            <!-- Menu Items -->
+                            <div class="py-2">
+                                <button class="w-full px-4 py-2 text-left text-sm text-[#101619] dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-3 transition-colors">
+                                    <span class="material-symbols-outlined !text-[18px]">person</span>
+                                    Profile
+                                </button>
+                                <button class="w-full px-4 py-2 text-left text-sm text-[#101619] dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-3 transition-colors">
+                                    <span class="material-symbols-outlined !text-[18px]">settings</span>
+                                    Settings
+                                </button>
+                            </div>
+
+                            <!-- Logout Section -->
+                            <div class="border-t border-[#e9eef1] dark:border-gray-800 py-2">
+                                <form action="/logout" method="GET">
+                                    <button type="submit" class="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-3 transition-colors font-medium">
+                                        <span class="material-symbols-outlined !text-[18px]">logout</span>
+                                        Logout
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col items-center py-8 md:py-12 px-4 md:px-6">
+            <div class="w-full max-w-[800px] space-y-8">
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+<!-- Predicted Class Display -->
+<div class="md:col-span-2 lg:col-span-5 flex flex-col items-center justify-center p-8 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 
+{% if result.predicted_class == 'Normal' %}
+glow-success
+{% elif result.confidence >= 70 %}
+glow-warning
+{% else %}
+glow-danger
+{% endif %}
+relative overflow-hidden mb-4">
+<div class="absolute top-0 right-0 p-4">
+<span class="px-3 py-1 {% if result.confidence >= 80 %}bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400{% elif result.confidence >= 60 %}bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400{% else %}bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400{% endif %} text-xs font-semibold rounded-full uppercase tracking-wider">
+{% if result.confidence >= 80 %}High Confidence{% elif result.confidence >= 60 %}Medium Confidence{% else %}Low Confidence{% endif %}
+</span>
+</div>
+<span class="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] mb-2">Predicted Class</span>
+<h2 class="text-5xl font-black {% if result.predicted_class == 'Normal' %}text-emerald-600 dark:text-emerald-400{% elif result.confidence >= 70 %}text-amber-600 dark:text-amber-400{% else %}text-red-600 dark:text-red-400{% endif %} mb-4">{{ result.predicted_class.upper() }}</h2>
+<div class="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+<span class="material-symbols-outlined {% if result.predicted_class == 'Normal' %}text-emerald-500{% elif result.confidence >= 70 %}text-amber-500{% else %}text-red-500{% endif %}">
+{% if result.predicted_class == 'Normal' %}check_circle{% elif result.confidence >= 70 %}warning{% else %}error{% endif %}
+</span>
+<span>
+{% if result.predicted_class == 'Normal' %}
+No significant findings detected in lung fields.
+{% elif result.confidence >= 70 %}
+Abnormality detected. Immediate specialist review recommended.
+{% else %}
+Analysis inconclusive. Recommend additional imaging.
+{% endif %}
+</span>
+</div>
+</div>
+
+<!-- Class Probability Cards -->
+{% set class_colors = {
+    'Normal': {'border': 'emerald', 'text': 'emerald', 'bg': 'emerald'},
+    'Bacterial Pneumonia': {'border': 'orange', 'text': 'orange', 'bg': 'orange'},
+    'Viral Pneumonia': {'border': 'amber', 'text': 'amber', 'bg': 'amber'},
+    'Tuberculosis': {'border': 'indigo', 'text': 'indigo', 'bg': 'indigo'},
+    'Corona Virus Disease': {'border': 'rose', 'text': 'rose', 'bg': 'rose'}
+} %}
+
+{% for class_name, percentage in result.labels.items() %}
+{% set is_predicted = class_name == result.predicted_class %}
+{% set colors = class_colors[class_name] %}
+{% set stroke_offset = 314.16 * (1 - percentage / 100) %}
+
+<div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border-2 {% if is_predicted %}border-{{ colors.border }}-500{% else %}border-slate-200 dark:border-slate-700{% endif %} flex flex-col items-center text-center shadow-sm {% if not is_predicted %}opacity-80{% endif %}">
+<h3 class="text-sm font-semibold mb-6 uppercase tracking-wider text-slate-600 dark:text-slate-300">{{ class_name }}</h3>
+<div class="relative w-28 h-28 mb-6">
+<svg class="w-full h-full">
+<circle class="text-slate-100 dark:text-slate-700" cx="56" cy="56" fill="transparent" r="50" stroke="currentColor" stroke-width="8"></circle>
+<circle class="text-{{ colors.text }}-500 progress-ring__circle" cx="56" cy="56" fill="transparent" r="50" stroke="currentColor" stroke-dasharray="314.16" stroke-dashoffset="{{ stroke_offset }}" stroke-linecap="round" stroke-width="8"></circle>
+</svg>
+<div class="absolute inset-0 flex items-center justify-center">
+<span class="text-xl font-bold">{{ "%.0f"|format(percentage) }}%</span>
+</div>
+</div>
+<span class="text-xs px-3 py-1 rounded-full 
+{% if is_predicted %}
+bg-{{ colors.bg }}-100 dark:bg-{{ colors.bg }}-900/40 text-{{ colors.bg }}-700 dark:text-{{ colors.bg }}-400 font-medium
+{% else %}
+bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 font-medium italic
+{% endif %}
+">
+{% if is_predicted %}Predicted Result{% else %}
+{% if percentage > 20 %}Possible{% elif percentage > 5 %}Unlikely{% else %}Minimal{% endif %}
+{% endif %}
+</span>
+</div>
+{% endfor %}
+
+</div>
+
+<!-- Explanation Image Section -->
+<div class="mt-12 bg-white dark:bg-slate-800 p-8 rounded-2xl border border-slate-200 dark:border-slate-700">
+<h3 class="text-lg font-semibold mb-6 text-slate-900 dark:text-white flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">insights</span>
+AI Explanation Analysis
+</h3>
+<div class="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700">
+<img alt="LIME and Grad-CAM explanations" src="data:image/png;base64,{{ result.explanation }}" class="w-full h-auto"/>
+</div>
+<p class="text-xs text-slate-500 dark:text-slate-400 mt-4 leading-relaxed">
+The image above shows three explanations: (1) Original X-ray, (2) LIME explanation showing which regions influenced the prediction, (3) Grad-CAM heatmap highlighting the model's attention areas.
+</p>
+</div>
+
+<!-- Action Buttons -->
+<div class="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4">
+<button onclick="downloadReport()" class="w-full sm:w-auto px-8 py-3 bg-primary hover:bg-blue-700 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/20 active:scale-95">
+<span class="material-symbols-outlined">file_download</span>
+Download Report (PDF)
+</button>
+<button onclick="uploadNewImage()" class="w-full sm:w-auto px-8 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95">
+<span class="material-symbols-outlined">file_upload</span>
+Upload New Image
+</button>
+</div>
+
+<!-- Footer -->
+<footer class="mt-16 pt-8 border-t border-slate-200 dark:border-slate-800">
+<div class="flex flex-col md:flex-row gap-6 items-start">
+<div class="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl flex-shrink-0">
+<span class="material-symbols-outlined text-amber-600 dark:text-amber-500">warning</span>
+</div>
+<div>
+<h4 class="font-bold text-slate-900 dark:text-white mb-1">Medical Disclaimer</h4>
+<p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+This AI-generated analysis is provided for educational and research support purposes only. It is NOT a definitive medical diagnosis. All findings must be reviewed and confirmed by a board-certified radiologist or licensed medical professional. Do not make medical decisions based solely on these results.
+</p>
+<p class="text-xs text-slate-400 dark:text-slate-500 mt-4">
+Analysis Engine: v4.3.0-stable • Model Confidence: {{ "%.1f"|format(result.confidence) }}% • Timestamp: {{ result.timestamp }}
+</p>
+</div>
+</div>
+</footer>
+</main>
+
+<div class="fixed inset-0 pointer-events-none -z-10 opacity-[0.03] dark:opacity-[0.05]">
+<svg class="h-full w-full" height="100" viewBox="0 0 100 100" width="100" xmlns="http://www.w3.org/2000/svg">
+<rect fill="none" height="100" width="100"></rect>
+<path d="M10 10 L90 90 M90 10 L10 90" stroke="currentColor" stroke-width="0.5"></path>
+</svg>
+</div>
+
+<script>
+    // Theme Toggle
+    const themeToggle = document.getElementById('themeToggle');
+    const html = document.documentElement;
+
+    // Load theme preference
+    const currentTheme = localStorage.getItem('theme') || 'light';
+    if (currentTheme === 'dark') {
+        html.classList.add('dark');
+    }
+
+    themeToggle.addEventListener('click', () => {
+        html.classList.toggle('dark');
+        const newTheme = html.classList.contains('dark') ? 'dark' : 'light';
+        localStorage.setItem('theme', newTheme);
+    });
+
+    // Profile Dropdown
+    const profileBtn = document.getElementById('profileBtn');
+    const dropdownMenu = document.getElementById('dropdownMenu');
+
+    profileBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdownMenu.classList.toggle('active');
+    });
+
+    document.addEventListener('click', () => {
+        dropdownMenu.classList.remove('active');
+    });
+
+    dropdownMenu.addEventListener('click', (e) => {
+        e.stopPropagation();
+    });
+
+    // Set Profile Image
+    function setProfileImage() {
+        const profileImage = document.getElementById('profileImage');
+        const doctorId = '{{ doctor_id }}';
+        
+        if (doctorId) {
+            profileImage.style.backgroundImage = `url('/public/dp/${doctorId}.jpg')`;
+            profileImage.style.backgroundSize = 'cover';
+            profileImage.style.backgroundPosition = 'center';
+        } else {
+            profileImage.innerHTML = '<span class="material-symbols-outlined text-gray-400">person</span>';
+            profileImage.style.display = 'flex';
+            profileImage.style.alignItems = 'center';
+            profileImage.style.justifyContent = 'center';
+        }
+    }
+
+    setProfileImage();
+</script>
+
+</body></html>

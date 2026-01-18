@@ -1,0 +1,26 @@
+{
+  "info": {
+    "_postman_id": "4408359d-8f30-4a54-8754-839ef5432ee8",
+    "name": "chestpredit",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "38b56df8-bb48-4270-a886-ab6eae751cbd"
+  },
+  "item": [
+    {
+      "name": "New Request",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://example.com",
+          "protocol": "https",
+          "host": [
+            "example",
+            "com"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
