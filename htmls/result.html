@@ -353,6 +353,10 @@ Analysis Engine: v4.3.0-stable • Model Confidence: {{ "%.1f"|format(result.con
     const themeToggle = document.getElementById('themeToggle');
     const html = document.documentElement;
 
+    function uploadNewImage(){
+        window.location.href = '/doctor_dashboard';
+    }
+
     // Load theme preference
     const currentTheme = localStorage.getItem('theme') || 'light';
     if (currentTheme === 'dark') {
