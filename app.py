@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template, redirect, url_for, session, send_from_directory
+from flask import Flask, request, jsonify, render_template, redirect, url_for, session, send_from_directory, send_file
 import base64
 import io
 import os
@@ -7,6 +7,7 @@ from PIL import Image
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
+from generatereport import generate_xray_report
 
 from predit import Explanation
 
@@ -278,6 +279,55 @@ def delete_doctor(doctor_id):
     except Exception:
         page = 1
     return redirect(url_for('manage_doctors', page=page))
+
+@app.route('/generate_report_pdf/<int:doctor_id>', methods=['POST'])
+def generate_report_pdf(doctor_id):
+    if session.get('user_type') != 'doctor' or session.get('user_id') != doctor_id:
+        return redirect(url_for('login'))
+
+    try:
+        # Get form data
+        patient_name = request.form.get('patient_name')
+        patient_age = request.form.get('patient_age')
+        patient_gender = request.form.get('patient_gender')
+        patient_id = request.form.get('patient_id')
+        patient_phone = request.form.get('patient_phone')
+        patient_email = request.form.get('patient_email')
+        disease_name = request.form.get('disease_name')
+        findings = request.form.get('findings')
+        impression = request.form.get('impression')
+        image_result_base64 = request.form.get('image_result_base64')  # Base64 explanation image from result page
+
+        # Validate required fields
+        if not (patient_name and patient_age and patient_gender and disease_name and findings and impression):
+            return jsonify({"error": "All patient and report fields are required."}), 400
+
+        # Generate PDF report with the explanation image
+        report_path = generate_xray_report(
+            hospital_name="University College Of Engineering",
+            patient_info={
+                "name": patient_name,
+                "age": patient_age,
+                "gender": patient_gender,
+                "id": patient_id or f"#{str(doctor_id).zfill(5)}-PX",
+                "phone": patient_phone,
+                "email": patient_email,
+                "findings": findings,
+                "impression": impression
+            },
+            disease_name=disease_name,
+            xray_image_base64=image_result_base64,  # Pass the explanation image as base64
+            doctor_info={
+                "name": session.get('username'),
+                "email": session.get('email')
+            }
+        )
+
+        return send_file(report_path, as_attachment=True, mimetype='application/pdf')
+    
+    except Exception as e:
+        print(f"Error generating PDF: {e}")
+        return jsonify({"error": f"Error generating report: {str(e)}"}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
