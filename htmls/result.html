@@ -204,7 +204,7 @@ bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 font-medium it
 AI Explanation Analysis
 </h3>
 <div class="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700">
-<img alt="LIME and Grad-CAM explanations" src="data:image/png;base64,{{ result.explanation }}" class="w-full h-auto"/>
+<img alt="LIME and Grad-CAM explanations" src="/public/explanations/{{ result.explanation }}" class="w-full h-auto"/>
 </div>
 <p class="text-xs text-slate-500 dark:text-slate-400 mt-4 leading-relaxed">
 The image above shows three explanations: (1) Original X-ray, (2) LIME explanation showing which regions influenced the prediction, (3) Grad-CAM heatmap highlighting the model's attention areas.
@@ -440,8 +440,8 @@ Analysis Engine: v4.3.0-stable • Model Confidence: {{ "%.1f"|format(result.con
         formData.append('findings', document.getElementById('findings').value);
         formData.append('impression', document.getElementById('impression').value);
         
-        // Add the explanation image (result image with LIME and Grad-CAM)
-        formData.append('image_result_base64', '{{ result.explanation }}');
+        // Add the explanation image filename (saved on server)
+        formData.append('explanation_filename', '{{ result.explanation }}');
 
         const doctorId = '{{ doctor_id }}';
 

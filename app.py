@@ -15,7 +15,7 @@ app = Flask(__name__, template_folder='htmls')
 
 # Secret key for session management
 app.secret_key = 'your_secret_key'
-
+app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100 MB limit for large medical images
 # Initialize the database
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///chest.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -132,7 +132,7 @@ def signup():
 
     return render_template('login.html')
 
-@app.route('/admin_dashboard')
+@app.route('/')
 def admin_dashboard():
     if session.get('user_type') == 'admin':
         return redirect(url_for('manage_doctors'))
@@ -169,18 +169,30 @@ def predict():
         image_file = request.files['image']
         image_file.seek(0)  # Reset file pointer
         returslt_image, labels = Explanation(image_file)
-        imagebase64 = base64.b64encode(returslt_image.read()).decode('utf-8')
+        
+        # Save explanation image to temporary folder instead of encoding as base64
+        temp_folder = 'public/explanations'
+        os.makedirs(temp_folder, exist_ok=True)
+        
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        user_id = session.get('user_id') or 0
+        explanation_filename = f"explanation_{user_id}_{timestamp}.png"
+        explanation_filepath = os.path.join(temp_folder, explanation_filename)
+        
+        # Write the image to file
+        with open(explanation_filepath, 'wb') as f:
+            f.write(returslt_image.read())
         returslt_image.close()
         
         # Sort labels to find the predicted class
         predicted_class = max(labels, key=labels.get)
         predicted_confidence = labels[predicted_class]
         
-        # Create result data for template
+        # Create result data for template - pass filename instead of base64
         result_data = {
             'predicted_class': predicted_class,
             'confidence': predicted_confidence,
-            'explanation': imagebase64,
+            'explanation': explanation_filename,  # Pass filename instead of base64
             'labels': labels,
             'uid': f"#{str(session.get('user_id')).zfill(5)}-PX" if session.get('user_id') else "#00000-PX",
             'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -235,6 +247,10 @@ def manage_doctors():
 @app.route('/public/dp/<filename>')
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+@app.route('/public/explanations/<filename>')
+def explanation_file(filename):
+    return send_from_directory('public/explanations', filename)
 
 @app.route('/admin/doctors/edit/<int:doctor_id>', methods=['POST'])
 def edit_doctor(doctor_id):
@@ -296,11 +312,18 @@ def generate_report_pdf(doctor_id):
         disease_name = request.form.get('disease_name')
         findings = request.form.get('findings')
         impression = request.form.get('impression')
-        image_result_base64 = request.form.get('image_result_base64')  # Base64 explanation image from result page
+        explanation_filename = request.form.get('explanation_filename')  # Explanation image filename from result page
 
         # Validate required fields
         if not (patient_name and patient_age and patient_gender and disease_name and findings and impression):
             return jsonify({"error": "All patient and report fields are required."}), 400
+
+        # Build path to explanation image
+        explanation_image_path = None
+        if explanation_filename:
+            explanation_image_path = os.path.join('public/explanations', explanation_filename)
+            if not os.path.exists(explanation_image_path):
+                explanation_image_path = None
 
         # Generate PDF report with the explanation image
         report_path = generate_xray_report(
@@ -316,7 +339,7 @@ def generate_report_pdf(doctor_id):
                 "impression": impression
             },
             disease_name=disease_name,
-            xray_image_base64=image_result_base64,  # Pass the explanation image as base64
+            xray_image_path=explanation_image_path,  # Pass file path instead of base64
             doctor_info={
                 "name": session.get('username'),
                 "email": session.get('email')
@@ -330,4 +353,11 @@ def generate_report_pdf(doctor_id):
         return jsonify({"error": f"Error generating report: {str(e)}"}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    from waitress import serve
+    serve(
+        app,
+        port=8000,
+        max_request_body_size=100 * 1024 * 1024,  # 100 MB limit for large medical images
+        inbuf_overflow=100 * 1024 * 1024,
+        outbuf_overflow=100 * 1024 * 1024
+    )
