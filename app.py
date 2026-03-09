@@ -353,11 +353,12 @@ def generate_report_pdf(doctor_id):
         return jsonify({"error": f"Error generating report: {str(e)}"}), 500
 
 if __name__ == '__main__':
-    from waitress import serve
-    serve(
-        app,
-        port=8000,
-        max_request_body_size=100 * 1024 * 1024,  # 100 MB limit for large medical images
-        inbuf_overflow=100 * 1024 * 1024,
-        outbuf_overflow=100 * 1024 * 1024
-    )
+    # from waitress import serve
+    # serve(
+    #     app,
+    #     port=8000,
+    #     max_request_body_size=100 * 1024 * 1024,  # 100 MB limit for large medical images
+    #     inbuf_overflow=100 * 1024 * 1024,
+    #     outbuf_overflow=100 * 1024 * 1024
+    # )
+    app.run(debug=True, port=8000)
