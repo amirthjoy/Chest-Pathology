@@ -156,6 +156,21 @@ def logout():
 def home():
     return "Image Classification and Explanation API"
 
+def compress_image(input_path, quality=70, max_width=None, max_height=None):
+    image = Image.open(input_path)
+    print("before compression:", image.size)
+    if image.mode in ("RGBA", "P"):
+        image = image.convert("RGB")
+    if max_width or max_height:
+        image.thumbnail((max_width or image.width, max_height or image.height))
+    
+    # Save to BytesIO object
+    output = io.BytesIO()
+    image.save(output, format='JPEG', optimize=True, quality=quality)
+    output.seek(0)
+    print("after compression:", image.size)
+    return output
+
 @app.route('/predict', methods=['POST', 'GET'])
 def predict():
     try:
@@ -167,6 +182,7 @@ def predict():
             return jsonify({"error": "No image provided"}), 400
 
         image_file = request.files['image']
+        image_file = compress_image(image_file,max_height=512,max_width=512)  # Compress the image before processing
         image_file.seek(0)  # Reset file pointer
         returslt_image, labels = Explanation(image_file)
         
@@ -353,12 +369,12 @@ def generate_report_pdf(doctor_id):
         return jsonify({"error": f"Error generating report: {str(e)}"}), 500
 
 if __name__ == '__main__':
-    # from waitress import serve
-    # serve(
-    #     app,
-    #     port=8000,
-    #     max_request_body_size=100 * 1024 * 1024,  # 100 MB limit for large medical images
-    #     inbuf_overflow=100 * 1024 * 1024,
-    #     outbuf_overflow=100 * 1024 * 1024
-    # )
-    app.run(debug=True, port=8000)
+    from waitress import serve
+    serve(
+        app,
+        port=8000,
+        max_request_body_size=100 * 1024 * 1024,  # 100 MB limit for large medical images
+        inbuf_overflow=100 * 1024 * 1024,
+        outbuf_overflow=100 * 1024 * 1024
+    )
+    # app.run(debug=True, port=8000)
