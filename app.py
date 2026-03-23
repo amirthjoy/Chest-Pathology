@@ -40,6 +40,71 @@ class Doctor(db.Model):
     password = db.Column(db.String(255), nullable=False)
     status = db.Column(db.String(50), default='inactive')
 
+
+class ReportLog(db.Model):
+    log_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    doctor_id = db.Column(db.Integer, db.ForeignKey('doctor.doctor_id'), nullable=False)
+    doctor_name = db.Column(db.String(100), nullable=False)
+    doctor_email = db.Column(db.String(100), nullable=False)
+    patient_name = db.Column(db.String(150), nullable=False)
+    patient_age = db.Column(db.String(20), nullable=False)
+    patient_gender = db.Column(db.String(20), nullable=False)
+    patient_id = db.Column(db.String(100))
+    patient_phone = db.Column(db.String(50))
+    patient_email = db.Column(db.String(100))
+    disease_name = db.Column(db.String(150), nullable=False)
+    findings = db.Column(db.Text, nullable=False)
+    impression = db.Column(db.Text, nullable=False)
+    explanation_filename = db.Column(db.String(255))
+    report_path = db.Column(db.String(255))
+    ip_address = db.Column(db.String(64))
+    device_info = db.Column(db.String(255))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+
+class SecurityLog(db.Model):
+    security_log_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    doctor_id = db.Column(db.Integer, db.ForeignKey('doctor.doctor_id'))
+    doctor_name = db.Column(db.String(100))
+    doctor_email = db.Column(db.String(100))
+    event_type = db.Column(db.String(50), nullable=False)
+    status = db.Column(db.String(50), nullable=False)
+    ip_address = db.Column(db.String(64))
+    device_info = db.Column(db.String(255))
+    user_agent = db.Column(db.String(500))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    notes = db.Column(db.Text)
+
+
+def get_client_ip():
+    forwarded_for = request.headers.get('X-Forwarded-For', '')
+    if forwarded_for:
+        return forwarded_for.split(',')[0].strip()
+    return request.remote_addr or 'Unknown'
+
+
+def get_device_info():
+    user_agent = request.user_agent
+    parts = [user_agent.platform, user_agent.browser]
+    details = " / ".join(part for part in parts if part)
+    return details or (request.headers.get('User-Agent', 'Unknown device')[:255])
+
+
+def create_security_log(event_type, status, doctor=None, email=None, notes=None):
+    security_log = SecurityLog(
+        doctor_id=doctor.doctor_id if doctor else None,
+        doctor_name=doctor.full_name if doctor else None,
+        doctor_email=(doctor.email if doctor else email),
+        event_type=event_type,
+        status=status,
+        ip_address=get_client_ip(),
+        device_info=get_device_info(),
+        user_agent=request.headers.get('User-Agent', '')[:500],
+        notes=notes
+    )
+    db.session.add(security_log)
+    db.session.commit()
+
 # Create the tables and add initial data
 def initialize_database():
     with app.app_context():
@@ -76,8 +141,10 @@ def login():
                 session['user_id'] = doctor.doctor_id
                 session['email'] = doctor.email
                 session['username'] = doctor.full_name
+                create_security_log('login', 'success', doctor=doctor)
                 return redirect(url_for('doctor_dashboard'))
             else:
+                create_security_log('login', 'failed', doctor=doctor, email=email, notes='Invalid doctor credentials')
                 return "Invalid doctor credentials", 401
 
     return render_template('login.html')
@@ -149,6 +216,9 @@ def doctor_dashboard():
 
 @app.route('/logout')
 def logout():
+    if session.get('user_type') == 'doctor':
+        doctor = Doctor.query.get(session.get('user_id'))
+        create_security_log('logout', 'success', doctor=doctor, email=session.get('email'))
     session.clear()
     return redirect(url_for('login'))
 
@@ -258,7 +328,52 @@ def manage_doctors():
     # Fetch doctors with pagination
     pagination = Doctor.query.order_by(Doctor.doctor_id.desc()).paginate(page=page, per_page=per_page, error_out=False)
     doctors = pagination.items
-    return render_template('admin.html', doctors=doctors, pagination=pagination, page=page, per_page=per_page, admin_username=session.get('username'))
+    return render_template(
+        'admin.html',
+        doctors=doctors,
+        pagination=pagination,
+        page=page,
+        per_page=per_page,
+        admin_username=session.get('username'),
+        current_page='doctors'
+    )
+
+
+@app.route('/admin/logs')
+def admin_logs():
+    if session.get('user_type') != 'admin':
+        return redirect(url_for('login'))
+
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
+    pagination = ReportLog.query.order_by(ReportLog.created_at.desc()).paginate(page=page, per_page=per_page, error_out=False)
+    return render_template(
+        'admin_logs.html',
+        logs=pagination.items,
+        pagination=pagination,
+        per_page=per_page,
+        admin_username=session.get('username'),
+        current_page='logs'
+    )
+
+
+@app.route('/admin/security-logs')
+@app.route('/admin/secuity-logs')
+def admin_security_logs():
+    if session.get('user_type') != 'admin':
+        return redirect(url_for('login'))
+
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
+    pagination = SecurityLog.query.order_by(SecurityLog.created_at.desc()).paginate(page=page, per_page=per_page, error_out=False)
+    return render_template(
+        'admin_security_logs.html',
+        logs=pagination.items,
+        pagination=pagination,
+        per_page=per_page,
+        admin_username=session.get('username'),
+        current_page='security'
+    )
 
 @app.route('/public/dp/<filename>')
 def uploaded_file(filename):
@@ -362,6 +477,27 @@ def generate_report_pdf(doctor_id):
             }
         )
 
+        report_log = ReportLog(
+            doctor_id=doctor_id,
+            doctor_name=session.get('username', ''),
+            doctor_email=session.get('email', ''),
+            patient_name=patient_name,
+            patient_age=patient_age,
+            patient_gender=patient_gender,
+            patient_id=patient_id or f"#{str(doctor_id).zfill(5)}-PX",
+            patient_phone=patient_phone,
+            patient_email=patient_email,
+            disease_name=disease_name,
+            findings=findings,
+            impression=impression,
+            explanation_filename=explanation_filename,
+            report_path=report_path,
+            ip_address=get_client_ip(),
+            device_info=get_device_info()
+        )
+        db.session.add(report_log)
+        db.session.commit()
+
         return send_file(report_path, as_attachment=True, mimetype='application/pdf')
     
     except Exception as e:
@@ -370,6 +506,7 @@ def generate_report_pdf(doctor_id):
 
 if __name__ == '__main__':
     from waitress import serve
+    print("Starting server on http://localhost:8000")
     serve(
         app,
         port=8000,
